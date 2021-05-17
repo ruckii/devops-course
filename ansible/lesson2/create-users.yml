@@ -1,0 +1,33 @@
+# Напишите плейбук для создания пользователей:
+#  - Alice
+#  - Bob
+#  - Carol 
+# Для каждого пользователя нужно задать
+# — имя
+# — адрес почты в комментарии (username@example.com)
+# — домашнюю папку
+# — пароль в зашифрованном виде – в виде зашифрованной переменной или из отдельного шифрованного файла на выбор. 
+# Кроме пароля больше ничего шифровать не нужно.
+# У уже созданных аккаунтов пароль менять не нужно.
+# Генерация хэшей паролей:
+# 1. Install pip
+#   sudo yum install pyton2-pip
+# 2. Install passgen library
+#   sudo pip install passlib
+# 3. Generate password hash  
+#   python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
+---
+- hosts: node1.example.com
+  tasks:
+  - name: Ensure users are created
+    user:
+      name: "{{ item.name }}"
+      comment: "{{ item.email }}"
+      password: "{{ item.passwordHash }}"
+      update_password: on_create
+      create_home: yes
+      state: present
+    loop:
+      - { name: 'alice', email: 'alice@example.com', passwordHash: '$6$rounds=656000$rREkTxB10zernr8Q$Fw7JDFtvGBHSIAEUWlM21s2amb37kvTIApAOeH9nG/ZhROBBWbz2Fw1mnzd11O6DaLXaOTwrPe1Z0zusuMn2w.'}
+      - { name: 'bob', email: 'bob@example.com', passwordHash: '$6$rounds=656000$CvAAICNLrcFVmBDb$MwXviaDZwTS.Kw.7VPhcScQDKLFtENCUhJwYFtxq9pDmU3xlXZcgVS9X5OWqbEpMnYyNb13RsBQukAg3FIRdF/'}
+      - { name: 'carol', email: 'carol@example.com', passwordHash: '$6$rounds=656000$AUTB8XHvn6VRQ04t$0YmguqQ9ILUgwl1paYFh7VL5tSG2VVoAptafN3RxUTf9mytjruYWOrbzAumMooNwe1eFDNX4xeTYBWrY0Ansn/'}
