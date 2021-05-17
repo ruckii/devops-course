@@ -1,0 +1,36 @@
+# 2. Отключите службу NetworkManager
+# Измените файл /etc/default/grub и добавьте параметры net.ifnames=0 и biosdevname=0 в строку, выполняющую загрузку ядра.
+# Выполните grub2-mkconfig, чтобы записать изменения в /etc/default/grub
+# Используйте модуль lineinfile для изменения конфигурациионого файла
+---
+- hosts: node1.example.com
+  #remote_user: ansible
+  #become: yes
+  tasks:
+  - name: Ensure NetworkManager is disabled
+    service:
+      name: NetworkManager
+      enabled: no
+      state: stopped
+  
+  - name: Ensure net.ifnames=0 are present
+    lineinfile:
+      path: /etc/default/grub
+      #GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+      backrefs: yes
+      regexp: '^(GRUB_CMDLINE_LINUX=(?!.* net.ifnames)\"[^\"]+)(\".*)'
+      line: '\1 net.ifnames=0\2'
+      state: present
+
+  - name: Ensure biosdevname=0 are present
+    lineinfile:
+      path: /etc/default/grub
+      #GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+      backrefs: yes
+      regexp: '^(GRUB_CMDLINE_LINUX=(?!.* biosdevname)\"[^\"]+)(\".*)'
+      line: '\1 biosdevname=0\2'
+      state: present
+  
+  - name: Write grub configuration file
+    command: grub2-mkconfig -o /boot/grub2/grub.cfg
+    # EFI: grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg

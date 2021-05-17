@@ -1,0 +1,30 @@
+# 3. Создайте плэйбук uninstall-httpd.yml, который удалит httpd с управляемых хостов, удалит файл /var/www/html/index.html и закроет на фаерволе порты, используемые веб-сервером.
+---
+- hosts: node1.example.com
+  #remote_user: ansible
+  #become: yes
+  tasks:
+  - name: Remove index page
+    file:
+      path: /var/www/html/index.html
+      state: absent
+
+  - name: Ensure http is not permitted
+    firewalld:
+      zone: public
+      service: http
+      permanent: yes
+      state: disabled
+    notify:
+      - restart firewalld
+  
+  - name: Ensure Apache web-server is uninstalled
+    package:
+      name: httpd
+      state: absent
+
+  handlers:
+  - name: restart firewalld
+    service:
+      name: firewalld
+      state: restarted

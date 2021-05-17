@@ -1,0 +1,54 @@
+# 1. Создайте плэйбук, выполняющий установку веб-сервера Apache на управляемом хосте со следующими требованиями:
+# - установка пакета httpd;
+# - включение службы веб-сервера и проверка, что он запущен;
+# - создание файла /var/www/html/index.html с текстом “Welcome to my web server”;
+# - используйте модуль firewalld для того, чтобы открыть необходимые для работы веб-сервера порты брендмауэра;
+---
+- hosts: node1.example.com
+  #remote_user: ansible
+  #become: yes
+  tasks:
+  - name: Ensure Apache web-server is installed
+    package:
+      name: httpd
+      state: present
+
+  - name: Ensure Apache web-server is running
+    service:
+      name: httpd
+      enabled: yes
+      state: started
+
+  - name: Ensure Apache web-server running on IPv4 address
+    lineinfile:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '^Listen '
+      line: Listen 0.0.0.0:80
+      state: present
+    notify:
+      - restart httpd
+
+  - name: Ensure http is permitted
+    firewalld:
+      zone: public
+      service: http
+      permanent: yes
+      state: enabled
+    notify:
+      - restart firewalld
+
+  - name: Create index page
+    lineinfile:
+      path: /var/www/html/index.html
+      line: Welcome to my web server
+      create: yes
+  
+  handlers:
+  - name: restart httpd
+    service:
+      name: httpd
+      state: restarted
+  - name: restart firewalld
+    service:
+      name: firewalld
+      state: restarted

@@ -1,0 +1,37 @@
+# Добавление net.ifnames=0 в параметр GRUB_CMDLINE_LINUX файла /etc/default/grub:
+# Если net.ifnames отсутствует - добавление
+# Если net.ifnames присутствует - изменение значения на 0
+---
+- hosts: node1.example.com
+  tasks:
+  - name: "Checking GRUB cmdline"
+    shell: "grep 'GRUB_CMDLINE_LINUX=.*net.ifnames.*' /etc/default/grub"
+    register: result
+    ignore_errors: True
+
+  # - name: "Switch Success"
+  #   debug:
+  #     var: result
+  #   when: result is succeeded
+  
+  # - name: "Switch Failure"
+  #   debug:
+  #     var: result
+  #   when: result is failed
+
+  - name: "Change value to net.ifnames=0 if exist"
+    lineinfile:
+      path: /etc/default/grub
+      #GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+      backrefs: yes
+      regexp: '^(GRUB_CMDLINE_LINUX=\")(.*)(.*net\.ifnames=)([01])(.*\")$'
+      line: '\g<1>\g<2>\g<3>0\g<5>'
+      state: present
+    when: result is succeeded
+  
+  - name: "Add parameter net.ifnames=0 if absent"
+    replace:
+      path: '/etc/default/grub'
+      regexp: '^GRUB_CMDLINE_LINUX="((\w.?)*)"$'
+      replace: 'GRUB_CMDLINE_LINUX="\1 net.ifnames=0"'
+    when: result is failed    
