@@ -1,0 +1,47 @@
+# Сделайте роль для установки Apache, используя плейбук из первого домашнего задания. Требования те же
+# - установка пакета httpd
+# - включение службы веб-сервера и проверка, что он запущен
+# - создание файла /var/www/html/index.html
+# - открытие необходимых для работы веб-сервера портов брендмауэра
+# Хотелось бы увидеть использование:
+# - переменных (в том числе фактов), 
+# - хендлеров
+# - шаблонов 
+# - и т.п., что мы рассматривали в рамках нашего курса.
+---
+- name: Ensure Apache web-server is installed
+  package:
+    name: httpd
+    state: present
+
+- name: Ensure Apache web-server is running
+  service:
+    name: httpd
+    enabled: yes
+    state: started
+
+- name: Ensure Apache web-server running on IPv4 address
+  lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    line: Listen 0.0.0.0:80
+    state: present
+  notify:
+    - restart httpd
+
+- name: Ensure http is permitted
+  firewalld:
+    zone: public
+    service: http
+    permanent: yes
+    state: enabled
+  notify:
+    - restart firewalld
+
+- name: Ensure index page template is copied
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ indexpage_path }}/index.html"
+    owner: apache
+    group: apache
+    mode: '0644'

@@ -1,0 +1,5 @@
+<h1>Welcome to my web server!</h1>
+<h2>Practice task {{ practice_task }}</h2>
+<strong>Server name:</strong> {{ ansible_facts.fqdn }}</br>
+<strong>Server OS:</strong> {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}</br>
+<sub>{{ ansible_managed }}</sub>
