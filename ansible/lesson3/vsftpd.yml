@@ -1,0 +1,4 @@
+---
+- hosts: node2.example.com
+  roles:
+  - vsftpd

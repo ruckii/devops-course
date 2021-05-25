@@ -1,0 +1,94 @@
+# Напишите роль, которая:
+# устанавливает и включает FTP (пакет vsftpd), 
+# открывает необходимые порты. 
+# Определите в переменных необходимые параметры конфигурации ftp-сервера 
+# и используйте их в шаблоне для файла конфигурации vsftpd.conf:
+# - разрешен анонимный доступ в папку /var/ftp/pub и аплоад файлов в папку /var/ftp/pub/upload;
+# - настроены необходимые разрешения и соответствующий SELinux контекст: "ftpd_anon_write" boolean - значение "on" (edited).
+---
+# tasks file for vsftpd
+- name: Ensure vsftpd server is installed
+  package:
+    name: vsftpd
+    state: present
+
+- name: Ensure vsftpd server is running
+  service:
+    name: vsftpd
+    enabled: yes
+    state: started
+
+- name: Ensure vsftpd.conf template is copied
+  template:
+    src: vsftpd.conf.j2
+    dest: /etc/vsftpd/vsftpd.conf
+  notify: restart vsftpd 
+
+- name: Ensure firewalld is installed
+  package:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld service is active
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Ensure firewall is configured
+  firewalld:
+    zone: public
+    permanent: yes
+    state: enabled
+    service: ftp
+    immediate: yes
+  notify: reload firewalld
+
+- name: Ensure pub directory is present
+  file:
+    path: /var/ftp/pub
+    state: directory
+    mode: '0755'
+    owner: ftp
+    group: ftp
+
+- name: Ensure readme.txt file is generated from template
+  ansible.builtin.template:
+    src: readme.txt.j2
+    dest: /var/ftp/pub/readme.txt
+    owner: ftp
+    group: ftp
+    mode: '0644'
+
+- name: Ensure upload directory is present
+  file:
+    path: /var/ftp/pub/upload
+    state: directory
+    mode: '0755'
+    owner: ftp
+    group: ftp
+
+- name: Ensure semanage module is installed
+  package:
+    name: policycoreutils-python
+    state: present
+
+- name: Set SELinux booleans
+  seboolean:
+    name: allow_ftpd_anon_write
+    #ftpd_anon_write
+    state: on
+    persistent: yes
+
+- name: Ensure SElinux files context is set # chcon -t public_content_rw_t /var/ftp/pub/upload
+  sefcontext:
+    target: /var/ftp/pub/upload
+    setype: public_content_rw_t
+    state: present
+    #ignore_selinux_state: yes
+    #reload: yes
+    #ftype: a
+  notify: run restorecon
+
+#- name: Restore context
+#  command: restorecon -irv /var/ftp/pub
