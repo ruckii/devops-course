@@ -37,6 +37,7 @@
     state: enabled
   notify:
     - restart firewalld
+  become: yes
 
 - name: Ensure index page template is copied
   ansible.builtin.template:
