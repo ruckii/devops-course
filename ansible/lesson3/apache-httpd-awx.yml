@@ -1,0 +1,5 @@
+# Node by IP
+---
+- hosts: 192.168.1.202
+  roles:
+  - apache-httpd
